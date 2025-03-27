@@ -32,14 +32,17 @@ form.addEventListener('submit', async event => {
   showLoader();
 
   try {
-    page = 1; // Скидаємо номер сторінки для нового запиту
+    page = 1;
     const { images, totalHits: fetchedTotalHits } = await fetchImages(
       query,
       page
     );
     totalHits = fetchedTotalHits;
     renderImages(images, gallery);
-    loadMoreBtn.style.display = 'block'; // Показуємо кнопку після першого запиту
+
+    if (images.length >= perPage) {
+      loadMoreBtn.style.display = 'block';
+    }
   } catch (error) {
     iziToast.error({ title: 'Error', message: error.message });
   } finally {
@@ -52,14 +55,9 @@ loadMoreBtn.addEventListener('click', async () => {
   showLoader();
 
   try {
-    const { images, totalHits: fetchedTotalHits } = await fetchImages(
-      query,
-      page
-    );
-    totalHits = fetchedTotalHits;
-    renderImages(images, gallery, true); // Додаємо нові зображення
+    const { images } = await fetchImages(query, page);
+    renderImages(images, gallery, true);
 
-    // **Плавне прокручування після завантаження**
     const { height: cardHeight } = document
       .querySelector('.gallery-item')
       .getBoundingClientRect();
@@ -68,8 +66,7 @@ loadMoreBtn.addEventListener('click', async () => {
       behavior: 'smooth',
     });
 
-    // Якщо більше немає зображень, ховаємо кнопку
-    if (page * perPage >= totalHits) {
+    if (images.length < perPage || page * perPage >= totalHits) {
       loadMoreBtn.style.display = 'none';
       iziToast.info({
         title: 'Info',
